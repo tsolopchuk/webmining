@@ -1,0 +1,42 @@
+import nltk, re
+from nltk import load
+
+def loadLexicon(fname):
+    newLex=set()
+    lex_conn=open(fname)
+    for line in lex_conn:
+        newLex.add(line.strip())
+    lex_conn.close()
+    return newLex
+
+posLex = loadLexicon('positive-words.txt')
+negLex = loadLexicon('negative-words.txt')
+
+_POS_TAGGER = 'taggers/maxent_treebank_pos_tagger/english.pickle'
+tagger = load(_POS_TAGGER)
+
+def processSentence(sentence,posLex,negLex,tagger):
+    
+    dict=[]
+    terms = nltk.word_tokenize(sentence)   
+        
+    tagged_terms=tagger.tag(terms)
+    
+    for i in range(len(tagged_terms)-3):
+        term1=tagged_terms[i]
+        term2=tagged_terms[i+1]
+        term3=tagged_terms[i+2]
+        term4=tagged_terms[i+3]
+        
+        if re.match('[n|N]ot',term1[0]) and re.match("\w+", term2[0]) and term3[0] in posLex and re.match('NN', term4[1]): 
+            dict.append((term1[0],term2[0], term3[0], term4[0]))
+        elif re.match('[n|N]ot',term1[0]) and re.match("\w+", term2[0]) and term3[0] in negLex and re.match('NN', term4[1]): 
+            dict.append((term1[0],term2[0], term3[0], term4[0]))
+            
+    return dict 
+    
+sentence = 'not an accurate book'
+
+if __name__=='__main__':
+    print (processSentence(sentence, posLex, negLex, tagger))
+
